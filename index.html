@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LUXE STORE</title>
+<title>VELORA STORE</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
 <style>
@@ -382,7 +382,7 @@
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">LU<span>X</span>E</div>
+  <div class="nav-logo">VE<span>L</span>ORA</div>
   <div class="nav-actions">
     <button class="nav-link" onclick="showSection('shop')">Shop</button>
     <button class="nav-link" onclick="showSection('shop')">Collections</button>
@@ -396,8 +396,8 @@
 <!-- HERO -->
 <div class="hero" id="shop">
   <div>
-    <div class="hero-sub">New Season Collection</div>
-    <h1>Curated <em>Luxury</em><br>Objects</h1>
+    <div class="hero-sub">Signature Maison Collection</div>
+    <h1>Curated <em>Velora</em><br>Essentials</h1>
   </div>
 </div>
 
@@ -511,14 +511,14 @@
 <script>
 // ─── DATA ────────────────────────────────────────────────────
 const products = [
-  { id:1, name:'Oud Noir', category:'fragrance', price:185, emoji:'🕯️', badge:'Bestseller', desc:'Dark woods, amber resin, and smoky vetiver. 50ml Eau de Parfum.' },
-  { id:2, name:'Velvet Rose', category:'fragrance', price:145, emoji:'🌹', badge:null, desc:'Bulgarian rose, patchouli, and white musk. 50ml Eau de Toilette.' },
-  { id:3, name:'Caviar Serum', category:'skincare', price:220, emoji:'✨', badge:'New', desc:'Caviar extract and retinol complex. Firm and illuminate overnight.' },
-  { id:4, name:'Gold Eye Cream', category:'skincare', price:98, emoji:'🌟', badge:null, desc:'24K gold peptides reduce fine lines and puffiness around the eye.' },
-  { id:5, name:'Silk Scarf', category:'accessories', price:260, emoji:'🧣', badge:'Limited', desc:'Hand-painted 100% mulberry silk. 90×90cm. Made in Como, Italy.' },
-  { id:6, name:'Leather Wallet', category:'accessories', price:195, emoji:'👜', badge:null, desc:'Full-grain calfskin leather with 8 card slots. Slim profile design.' },
-  { id:7, name:'Marble Diffuser', category:'home', price:135, emoji:'🪨', badge:'New', desc:'Cold-press marble vessel with organic reed sticks. 200ml cedar & sage.' },
-  { id:8, name:'Linen Candle', category:'home', price:68, emoji:'🕯', badge:null, desc:'Hand-poured soy wax with jasmine and sandalwood. 45hr burn time.' },
+  { id:1, name:'Noir Velour Elixir', category:'fragrance', price:185, emoji:'🕯️', badge:'Bestseller', desc:'An opulent amber-woody signature with deep saffron undertones and velvet warmth.' },
+  { id:2, name:'Rosé Veil Mist', category:'fragrance', price:145, emoji:'🌹', badge:null, desc:'A luminous rose accord softened with pear skin and creamy musk.' },
+  { id:3, name:'Lumière Renewal Serum', category:'skincare', price:220, emoji:'✨', badge:'New', desc:'A radiance-boosting serum infused with botanical actives for refined, glass-skin glow.' },
+  { id:4, name:'Goldline Eye Velvet', category:'skincare', price:98, emoji:'🌟', badge:null, desc:'A featherlight eye treatment that smooths fine lines and brightens the look of tired lids.' },
+  { id:5, name:'Éclat Silk Wrap', category:'accessories', price:260, emoji:'🧣', badge:'Limited', desc:'A couture-inspired silk scarf finished with an effortless drape and elevated palette.' },
+  { id:6, name:'Maison Signature Wallet', category:'accessories', price:195, emoji:'👜', badge:null, desc:'A sculpted leather wallet designed for polished daily carry and timeless sophistication.' },
+  { id:7, name:'Orchid Stone Diffuser', category:'home', price:135, emoji:'🪨', badge:'New', desc:'An architectural home fragrance vessel layered with cedar, sage, and airy florals.' },
+  { id:8, name:'Soleil Ember Candle', category:'home', price:68, emoji:'🕯', badge:null, desc:'A soft, golden candle blend of jasmine, sandalwood, and slow-burn elegance.' },
 ];
 
 let cart = [];
@@ -690,7 +690,7 @@ function initPayPal() {
       const total = (getSubtotal() * 1.08).toFixed(2);
       return actions.order.create({
         purchase_units: [{
-          description: 'LUXE Store Order',
+          description: 'VELORA Store Order',
           amount: {
             currency_code: 'USD',
             value: total,
@@ -713,7 +713,7 @@ function initPayPal() {
     },
     onApprove: function(data, actions) {
       return actions.order.capture().then(function(details) {
-        const orderId = details.id || ('LUXE-' + Math.random().toString(36).substr(2,8).toUpperCase());
+        const orderId = details.id || ('VELORA-' + Math.random().toString(36).substr(2,8).toUpperCase());
         showSuccess(orderId);
       });
     },
