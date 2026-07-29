@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>VELORA STORE</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=MY_SANDBOX_CLIENT_ID&currency=USD&intent=capture"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -540,11 +540,16 @@
     <!-- Success Screen -->
     <div class="success-screen" id="successScreen">
       <div class="success-icon">✓</div>
-      <div class="success-title">Order Confirmed!</div>
-      <p class="success-sub">Thank you for your purchase.<br>A confirmation has been sent to your email.<br><br>
-        <strong id="successOrderId"></strong>
-      </p>
-      <br>
+      <div class="success-title">Payment Successful</div>
+      <p class="success-sub">Thank you for your purchase. A confirmation has been sent to your email.</p>
+      <div style="margin: 20px auto; max-width: 400px; text-align: left; background: var(--surface); padding: 20px; border: 1px solid var(--border); font-size: 13px; line-height: 1.8;">
+        <div><strong>Order ID:</strong> <span id="successOrderId"></span></div>
+        <div><strong>Customer Name:</strong> <span id="successCustomerName"></span></div>
+        <div><strong>Customer Email:</strong> <span id="successCustomerEmail"></span></div>
+        <div><strong>Total Paid:</strong> <span id="successTotalPaid"></span></div>
+        <div><strong>Order Date:</strong> <span id="successOrderDate"></span></div>
+        <div><strong>Est. Delivery:</strong> <span id="successEstDelivery"></span></div>
+      </div>
       <button class="checkout-btn" style="max-width:200px;margin:0 auto" onclick="finishOrder()">Continue Shopping</button>
     </div>
   </div>
@@ -774,7 +779,7 @@ function buildOrderSummary() {
 }
 
 function openCheckout() {
-  if (cart.length === 0) { showToast('Your cart is empty'); return; }
+  if (cart.length === 0) { showToast('Your cart is empty.'); return; }
   document.getElementById('orderSummaryMini').innerHTML = buildOrderSummary();
   document.getElementById('checkoutModal').classList.add('open');
   document.getElementById('successScreen').classList.remove('show');
@@ -792,7 +797,53 @@ function closeCheckout() {
   document.body.style.overflow = '';
 }
 
+// ─── VALIDATION HELPERS ──────────────────────────────────────
+function validateEmail(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(String(email).toLowerCase());
+}
+
+function validateShippingForm() {
+  if (cart.length === 0) {
+    showToast('Your cart is empty.');
+    return false;
+  }
+
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const city = document.getElementById('city').value.trim();
+  const zip = document.getElementById('zip').value.trim();
+
+  if (!firstName || !lastName || !email || !address || !city || !zip) {
+    showToast('Please fill in all shipping fields.');
+    return false;
+  }
+
+  if (!validateEmail(email)) {
+    showToast('Please enter a valid email address.');
+    return false;
+  }
+
+  return true;
+}
+
+function resetShippingForm() {
+  const fields = ['firstName', 'lastName', 'email', 'address', 'city', 'zip'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// ─── PAYPAL INTEGRATION ─────────────────────────────────────
 function initPayPal() {
+  const container = document.getElementById('paypal-button-container');
+  if (container) {
+    container.innerHTML = '';
+  }
+
   paypal.Buttons({
     style: {
       layout: 'vertical',
@@ -801,17 +852,37 @@ function initPayPal() {
       label: 'pay',
       height: 48,
     },
+    onClick: function(data, actions) {
+      if (!validateShippingForm()) {
+        return actions.reject();
+      }
+      return actions.resolve();
+    },
     createOrder: function(data, actions) {
-      const total = (getSubtotal() * 1.08).toFixed(2);
+      if (cart.length === 0) {
+        showToast('Your cart is empty.');
+        return actions.reject();
+      }
+
+      const subtotal = getSubtotal();
+      const tax = subtotal * 0.08;
+      const grandTotal = subtotal + tax;
+
+      /*
+       * PRODUCTION BACKEND NOTE:
+       * In a secure production application, do NOT create orders directly on the client side.
+       * Instead, make an API call to your backend server (e.g. POST /api/orders), where the server
+       * uses your PayPal API Secret Key to securely call PayPal's /v2/checkout/orders endpoint.
+       */
       return actions.order.create({
         purchase_units: [{
           description: 'VELORA Store Order',
           amount: {
             currency_code: 'USD',
-            value: total,
+            value: grandTotal.toFixed(2),
             breakdown: {
-              item_total: { currency_code: 'USD', value: getSubtotal().toFixed(2) },
-              tax_total: { currency_code: 'USD', value: (getSubtotal() * 0.08).toFixed(2) }
+              item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
+              tax_total: { currency_code: 'USD', value: tax.toFixed(2) }
             }
           },
           items: cart.map(item => ({
@@ -820,21 +891,52 @@ function initPayPal() {
             quantity: item.qty.toString(),
             category: 'PHYSICAL_GOODS'
           }))
-        }],
-        application_context: {
-          shipping_preference: 'NO_SHIPPING'
-        }
+        }]
       });
     },
-    onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        const orderId = details.id || ('VELORA-' + Math.random().toString(36).substr(2,8).toUpperCase());
-        showSuccess(orderId);
-      });
+    onApprove: async function(data, actions) {
+      try {
+        /*
+         * PRODUCTION BACKEND NOTE:
+         * In a secure production application, send data.orderID to your backend server (e.g. POST /api/orders/capture).
+         * Your server should execute the capture using the PayPal SDK / API Secret and save order details in a database.
+         */
+        const details = await actions.order.capture();
+
+        const orderId = details.id || ('VELORA-' + Math.random().toString(36).substring(2, 10).toUpperCase());
+        
+        const buyerFirstName = document.getElementById('firstName').value.trim();
+        const buyerLastName = document.getElementById('lastName').value.trim();
+        const buyerEmailInput = document.getElementById('email').value.trim();
+
+        const buyerName = (details.payer && details.payer.name && details.payer.name.given_name)
+          ? `${details.payer.name.given_name} ${details.payer.name.surname || ''}`.trim()
+          : `${buyerFirstName} ${buyerLastName}`;
+
+        const buyerEmail = (details.payer && details.payer.email_address)
+          ? details.payer.email_address
+          : buyerEmailInput;
+
+        let totalValue = (getSubtotal() * 1.08).toFixed(2);
+        if (details.purchase_units && details.purchase_units[0] && details.purchase_units[0].payments && details.purchase_units[0].payments.captures) {
+          totalValue = parseFloat(details.purchase_units[0].payments.captures[0].amount.value).toFixed(2);
+        }
+
+        showSuccess({
+          orderId: orderId,
+          buyerName: buyerName,
+          buyerEmail: buyerEmail,
+          amountPaid: '$' + totalValue
+        });
+
+      } catch (err) {
+        console.error('PayPal Order Capture Error:', err);
+        showToast('Payment capture failed. Please try again.');
+      }
     },
     onError: function(err) {
-      showToast('Payment failed. Please try again.');
-      console.error('PayPal error:', err);
+      console.error('PayPal Integration Error:', err);
+      showToast('Payment error occurred. Please try again.');
     },
     onCancel: function() {
       showToast('Payment cancelled.');
@@ -842,11 +944,24 @@ function initPayPal() {
   }).render('#paypal-button-container');
 }
 
-function showSuccess(orderId) {
+function showSuccess(orderInfo) {
   document.getElementById('checkoutContent').style.display = 'none';
   const s = document.getElementById('successScreen');
   s.classList.add('show');
-  document.getElementById('successOrderId').textContent = 'Order ID: ' + orderId;
+
+  const now = new Date();
+  const orderDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const estDeliveryDate = new Date(now);
+  estDeliveryDate.setDate(now.getDate() + 5);
+  const deliveryStr = estDeliveryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  document.getElementById('successOrderId').textContent = orderInfo.orderId;
+  document.getElementById('successCustomerName').textContent = orderInfo.buyerName;
+  document.getElementById('successCustomerEmail').textContent = orderInfo.buyerEmail;
+  document.getElementById('successTotalPaid').textContent = orderInfo.amountPaid;
+  document.getElementById('successOrderDate').textContent = orderDate;
+  document.getElementById('successEstDelivery').textContent = deliveryStr + ' (3-5 Business Days)';
 }
 
 function finishOrder() {
@@ -854,9 +969,16 @@ function finishOrder() {
   paypalRendered = false;
   updateCartBadge();
   renderCartItems();
+  resetShippingForm();
   closeCheckout();
   closeCart();
-  document.getElementById('paypal-button-container').innerHTML = '';
+
+  const container = document.getElementById('paypal-button-container');
+  if (container) {
+    container.innerHTML = '';
+  }
+
+  showSection('shop');
   showToast('Thank you for your order!');
 }
 
