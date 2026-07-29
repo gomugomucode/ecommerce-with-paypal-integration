@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>VELORA STORE</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<!-- PayPal Sandbox SDK Script (Replace 'sb' with your actual Sandbox Client ID from developer.paypal.com) -->
-<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD&intent=capture"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -392,7 +391,7 @@
     width: 72px; height: 72px;
     background: #2d7a4f; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 24px; font-size: 32px; color: white;
+    margin: 0 auto 24px; font-size: 32px;
   }
   .success-title {
     font-family: 'Cormorant Garamond', serif;
@@ -504,29 +503,29 @@
           <div class="form-row">
             <div class="form-group">
               <label>First Name</label>
-              <input type="text" id="firstName" placeholder="Jane" maxlength="50"/>
+              <input type="text" id="firstName" placeholder="Jane"/>
             </div>
             <div class="form-group">
               <label>Last Name</label>
-              <input type="text" id="lastName" placeholder="Doe" maxlength="50"/>
+              <input type="text" id="lastName" placeholder="Doe"/>
             </div>
           </div>
           <div class="form-group">
             <label>Email Address</label>
-            <input type="email" id="email" placeholder="jane@example.com" maxlength="100"/>
+            <input type="email" id="email" placeholder="jane@example.com"/>
           </div>
           <div class="form-group">
             <label>Street Address</label>
-            <input type="text" id="address" placeholder="123 Main Street" maxlength="120"/>
+            <input type="text" id="address" placeholder="123 Main Street"/>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>City</label>
-              <input type="text" id="city" placeholder="New York" maxlength="50"/>
+              <input type="text" id="city" placeholder="New York"/>
             </div>
             <div class="form-group">
               <label>Zip Code</label>
-              <input type="text" id="zip" placeholder="10001" maxlength="10"/>
+              <input type="text" id="zip" placeholder="10001"/>
             </div>
           </div>
         </div>
@@ -534,29 +533,18 @@
         <div class="payment-divider">Pay Securely With</div>
 
         <!-- PayPal Button -->
-        <div id="paypal-button-container">
-          <div style="text-align:center; padding:15px; font-size:12px; color:var(--muted);">Loading PayPal Payment System...</div>
-        </div>
+        <div id="paypal-button-container"></div>
       </div>
     </div>
 
     <!-- Success Screen -->
     <div class="success-screen" id="successScreen">
       <div class="success-icon">✓</div>
-      <div class="success-title">Payment Successful</div>
-      <p class="success-sub">Thank you for your purchase. A confirmation has been sent to your email.</p>
-      <div style="margin: 20px auto; max-width: 440px; text-align: left; background: var(--surface); padding: 20px; border: 1px solid var(--border); font-size: 13px; line-height: 1.8;">
-        <div><strong>Order ID:</strong> <span id="successOrderId"></span></div>
-        <div><strong>Transaction ID:</strong> <span id="successTxnId"></span></div>
-        <div><strong>Payer ID:</strong> <span id="successPayerId"></span></div>
-        <div><strong>Customer Name:</strong> <span id="successCustomerName"></span></div>
-        <div><strong>Customer Email:</strong> <span id="successCustomerEmail"></span></div>
-        <div><strong>Amount Paid:</strong> <span id="successTotalPaid"></span> (USD)</div>
-        <div><strong>Payment Status:</strong> <span id="successStatus" style="color:#2d7a4f;font-weight:600">COMPLETED</span></div>
-        <div><strong>Order Date:</strong> <span id="successOrderDate"></span></div>
-        <div><strong>Est. Delivery:</strong> <span id="successEstDelivery"></span></div>
-        <div><strong>Shipping Address:</strong> <span id="successShippingAddress"></span></div>
-      </div>
+      <div class="success-title">Order Confirmed!</div>
+      <p class="success-sub">Thank you for your purchase.<br>A confirmation has been sent to your email.<br><br>
+        <strong id="successOrderId"></strong>
+      </p>
+      <br>
       <button class="checkout-btn" style="max-width:200px;margin:0 auto" onclick="finishOrder()">Continue Shopping</button>
     </div>
   </div>
@@ -591,14 +579,14 @@
 <script>
 // ─── DATA ────────────────────────────────────────────────────
 const products = [
-  { id:1, sku:'VEL-FRG-001', name:'Noir Velour Elixir', category:'fragrance', price:185, emoji:'🕯️', badge:'Bestseller', desc:'An opulent amber-woody signature with deep saffron undertones and velvet warmth.' },
-  { id:2, sku:'VEL-FRG-002', name:'Rosé Veil Mist', category:'fragrance', price:145, emoji:'🌹', badge:null, desc:'A luminous rose accord softened with pear skin and creamy musk.' },
-  { id:3, sku:'VEL-SKN-001', name:'Lumière Renewal Serum', category:'skincare', price:220, emoji:'✨', badge:'New', desc:'A radiance-boosting serum infused with botanical actives for refined, glass-skin glow.' },
-  { id:4, sku:'VEL-SKN-002', name:'Goldline Eye Velvet', category:'skincare', price:98, emoji:'🌟', badge:null, desc:'A featherlight eye treatment that smooths fine lines and brightens the look of tired lids.' },
-  { id:5, sku:'VEL-ACC-001', name:'Éclat Silk Wrap', category:'accessories', price:260, emoji:'🧣', badge:'Limited', desc:'A couture-inspired silk scarf finished with an effortless drape and elevated palette.' },
-  { id:6, sku:'VEL-ACC-002', name:'Maison Signature Wallet', category:'accessories', price:195, emoji:'👜', badge:null, desc:'A sculpted leather wallet designed for polished daily carry and timeless sophistication.' },
-  { id:7, sku:'VEL-HOM-001', name:'Orchid Stone Diffuser', category:'home', price:135, emoji:'🪨', badge:'New', desc:'An architectural home fragrance vessel layered with cedar, sage, and airy florals.' },
-  { id:8, sku:'VEL-HOM-002', name:'Soleil Ember Candle', category:'home', price:68, emoji:'🕯', badge:null, desc:'A soft, golden candle blend of jasmine, sandalwood, and slow-burn elegance.' },
+  { id:1, name:'Noir Velour Elixir', category:'fragrance', price:185, emoji:'🕯️', badge:'Bestseller', desc:'An opulent amber-woody signature with deep saffron undertones and velvet warmth.' },
+  { id:2, name:'Rosé Veil Mist', category:'fragrance', price:145, emoji:'🌹', badge:null, desc:'A luminous rose accord softened with pear skin and creamy musk.' },
+  { id:3, name:'Lumière Renewal Serum', category:'skincare', price:220, emoji:'✨', badge:'New', desc:'A radiance-boosting serum infused with botanical actives for refined, glass-skin glow.' },
+  { id:4, name:'Goldline Eye Velvet', category:'skincare', price:98, emoji:'🌟', badge:null, desc:'A featherlight eye treatment that smooths fine lines and brightens the look of tired lids.' },
+  { id:5, name:'Éclat Silk Wrap', category:'accessories', price:260, emoji:'🧣', badge:'Limited', desc:'A couture-inspired silk scarf finished with an effortless drape and elevated palette.' },
+  { id:6, name:'Maison Signature Wallet', category:'accessories', price:195, emoji:'👜', badge:null, desc:'A sculpted leather wallet designed for polished daily carry and timeless sophistication.' },
+  { id:7, name:'Orchid Stone Diffuser', category:'home', price:135, emoji:'🪨', badge:'New', desc:'An architectural home fragrance vessel layered with cedar, sage, and airy florals.' },
+  { id:8, name:'Soleil Ember Candle', category:'home', price:68, emoji:'🕯', badge:null, desc:'A soft, golden candle blend of jasmine, sandalwood, and slow-burn elegance.' },
 ];
 
 let cart = [];
@@ -771,91 +759,13 @@ function closeCart() {
   document.body.style.overflow = '';
 }
 
-// ─── VALIDATION & PRECISION HELPERS ─────────────────────────
-function roundCurrency(val) {
-  return Math.round((Number(val) + Number.EPSILON) * 100) / 100;
-}
-
-function validateCart() {
-  if (!Array.isArray(cart) || cart.length === 0) {
-    showToast('Your cart is empty.');
-    return false;
-  }
-  for (const item of cart) {
-    if (typeof item.price !== 'number' || isNaN(item.price) || item.price <= 0) {
-      showToast('Cart contains an item with an invalid price.');
-      return false;
-    }
-    if (typeof item.qty !== 'number' || isNaN(item.qty) || item.qty <= 0 || !Number.isInteger(item.qty)) {
-      showToast('Cart contains an item with an invalid quantity.');
-      return false;
-    }
-  }
-  const subtotal = getSubtotal();
-  if (isNaN(subtotal) || subtotal <= 0) {
-    showToast('Cart subtotal is invalid.');
-    return false;
-  }
-  return true;
-}
-
-function validateEmail(email) {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(String(email).toLowerCase());
-}
-
-function validateShippingForm() {
-  if (!navigator.onLine) {
-    showToast('Network is offline. Please check your internet connection.');
-    return false;
-  }
-
-  if (!validateCart()) {
-    return false;
-  }
-
-  const firstName = document.getElementById('firstName').value.trim();
-  const lastName = document.getElementById('lastName').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const address = document.getElementById('address').value.trim();
-  const city = document.getElementById('city').value.trim();
-  const zip = document.getElementById('zip').value.trim();
-
-  if (!firstName || !lastName || !email || !address || !city || !zip) {
-    showToast('Please fill in all shipping fields.');
-    return false;
-  }
-
-  if (firstName.length < 2 || firstName.length > 50 || lastName.length < 2 || lastName.length > 50) {
-    showToast('First and last names must be between 2 and 50 characters.');
-    return false;
-  }
-
-  if (!validateEmail(email)) {
-    showToast('Please enter a valid email address.');
-    return false;
-  }
-
-  return true;
-}
-
-function resetShippingForm() {
-  const fields = ['firstName', 'lastName', 'email', 'address', 'city', 'zip'];
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-}
-
-// ─── PAYPAL INTEGRATION ─────────────────────────────────────
+// ─── CHECKOUT ────────────────────────────────────────────────
 let paypalRendered = false;
-let paypalButtonInstance = null;
-let isCapturing = false;
 
 function buildOrderSummary() {
-  const sub = roundCurrency(getSubtotal());
-  const tax = roundCurrency(sub * 0.08);
-  const total = roundCurrency(sub + tax);
+  const sub = getSubtotal();
+  const tax = sub * 0.08;
+  const total = sub + tax;
   return `
     ${cart.map(i => `<div class="order-item-row"><span>${i.name} × ${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join('')}
     <div class="order-item-row"><span>Tax (8%)</span><span>$${tax.toFixed(2)}</span></div>
@@ -864,8 +774,7 @@ function buildOrderSummary() {
 }
 
 function openCheckout() {
-  if (!validateCart()) return;
-
+  if (cart.length === 0) { showToast('Your cart is empty'); return; }
   document.getElementById('orderSummaryMini').innerHTML = buildOrderSummary();
   document.getElementById('checkoutModal').classList.add('open');
   document.getElementById('successScreen').classList.remove('show');
@@ -883,233 +792,71 @@ function closeCheckout() {
   document.body.style.overflow = '';
 }
 
-function destroyPayPalButton() {
-  if (paypalButtonInstance && typeof paypalButtonInstance.close === 'function') {
-    try {
-      paypalButtonInstance.close();
-    } catch (e) {
-      console.warn('Error closing PayPal button instance:', e);
-    }
-  }
-  paypalButtonInstance = null;
-  const container = document.getElementById('paypal-button-container');
-  if (container) {
-    container.innerHTML = '';
-  }
-  paypalRendered = false;
-}
-
 function initPayPal() {
-  if (typeof paypal === 'undefined' || !paypal.Buttons) {
-    console.error('PayPal SDK not loaded or unavailable.');
-    showToast('PayPal payment service is currently unavailable. Please refresh.');
-    return;
-  }
-
-  destroyPayPalButton();
-
-  try {
-    paypalButtonInstance = paypal.Buttons({
-      style: {
-        layout: 'vertical',
-        color: 'black',
-        shape: 'rect',
-        label: 'pay',
-        height: 48,
-      },
-
-      onClick: function(data, actions) {
-        if (!validateShippingForm()) {
-          return actions.reject();
-        }
-        return actions.resolve();
-      },
-
-      createOrder: function(data, actions) {
-        if (!validateCart()) {
-          return actions.reject();
-        }
-
-        const subtotal = roundCurrency(getSubtotal());
-        const tax = roundCurrency(subtotal * 0.08);
-        const grandTotal = roundCurrency(subtotal + tax);
-
-        const firstName = document.getElementById('firstName').value.trim();
-        const lastName = document.getElementById('lastName').value.trim();
-        const address = document.getElementById('address').value.trim();
-        const city = document.getElementById('city').value.trim();
-        const zip = document.getElementById('zip').value.trim();
-
-        const invoiceId = 'INV-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-        const customId = 'VELORA-CUST-' + Math.random().toString(36).substring(2, 9).toUpperCase();
-
-        /*
-         * PRODUCTION SECURITY AUDIT NOTE:
-         * In a production environment, order creation MUST be handled on a secure backend server.
-         * Devtools users can tamper with client-side JavaScript calculations.
-         * Server endpoint should call PayPal REST API /v2/checkout/orders using client secret.
-         */
-        return actions.order.create({
-          intent: 'CAPTURE',
-          purchase_units: [{
-            reference_id: 'default',
-            description: 'VELORA Store Purchase',
-            custom_id: customId,
-            invoice_id: invoiceId,
-            soft_descriptor: 'VELORA STORE',
-            amount: {
-              currency_code: 'USD',
-              value: grandTotal.toFixed(2),
-              breakdown: {
-                item_total: { currency_code: 'USD', value: subtotal.toFixed(2) },
-                tax_total: { currency_code: 'USD', value: tax.toFixed(2) },
-                shipping: { currency_code: 'USD', value: '0.00' },
-                handling: { currency_code: 'USD', value: '0.00' },
-                discount: { currency_code: 'USD', value: '0.00' }
-              }
-            },
-            items: cart.map(item => ({
-              name: item.name.substring(0, 127),
-              description: (item.desc || item.name).substring(0, 127),
-              sku: item.sku || ('SKU-' + item.id),
-              unit_amount: { currency_code: 'USD', value: roundCurrency(item.price).toFixed(2) },
-              quantity: item.qty.toString(),
-              category: 'PHYSICAL_GOODS'
-            })),
-            shipping: {
-              name: { full_name: `${firstName} ${lastName}` },
-              address: {
-                address_line_1: address,
-                admin_area_2: city,
-                postal_code: zip,
-                country_code: 'US'
-              }
+  paypal.Buttons({
+    style: {
+      layout: 'vertical',
+      color: 'black',
+      shape: 'rect',
+      label: 'pay',
+      height: 48,
+    },
+    createOrder: function(data, actions) {
+      const total = (getSubtotal() * 1.08).toFixed(2);
+      return actions.order.create({
+        purchase_units: [{
+          description: 'VELORA Store Order',
+          amount: {
+            currency_code: 'USD',
+            value: total,
+            breakdown: {
+              item_total: { currency_code: 'USD', value: getSubtotal().toFixed(2) },
+              tax_total: { currency_code: 'USD', value: (getSubtotal() * 0.08).toFixed(2) }
             }
-          }],
-          application_context: {
-            brand_name: 'VELORA STORE',
-            locale: 'en-US',
-            landing_page: 'NO_PREFERENCE',
-            user_action: 'PAY_NOW',
-            shipping_preference: 'SET_PROVIDED_ADDRESS'
-          }
-        });
-      },
-
-      onApprove: async function(data, actions) {
-        if (isCapturing) return;
-        isCapturing = true;
-
-        try {
-          /*
-           * PRODUCTION SECURITY AUDIT NOTE:
-           * Server-side capture prevents order fraud, duplicate capture, and client-side manipulation.
-           * Client passes data.orderID to backend POST /api/paypal/capture-order.
-           */
-          const details = await actions.order.capture();
-
-          if (details.status !== 'COMPLETED') {
-            throw new Error('PayPal payment status not COMPLETED: ' + details.status);
-          }
-
-          const orderId = details.id || ('VELORA-' + Math.random().toString(36).substring(2, 10).toUpperCase());
-          
-          const captureObj = (details.purchase_units && details.purchase_units[0] && details.purchase_units[0].payments && details.purchase_units[0].payments.captures)
-            ? details.purchase_units[0].payments.captures[0]
-            : null;
-
-          const txnId = captureObj ? captureObj.id : 'TXN-' + orderId;
-          const payerId = (details.payer && details.payer.payer_id) ? details.payer.payer_id : 'PAYER-SANDBOX';
-
-          const buyerFirstName = document.getElementById('firstName').value.trim();
-          const buyerLastName = document.getElementById('lastName').value.trim();
-          const buyerEmailInput = document.getElementById('email').value.trim();
-          const addressInput = document.getElementById('address').value.trim();
-          const cityInput = document.getElementById('city').value.trim();
-          const zipInput = document.getElementById('zip').value.trim();
-
-          const buyerName = (details.payer && details.payer.name && details.payer.name.given_name)
-            ? `${details.payer.name.given_name} ${details.payer.name.surname || ''}`.trim()
-            : `${buyerFirstName} ${buyerLastName}`;
-
-          const buyerEmail = (details.payer && details.payer.email_address)
-            ? details.payer.email_address
-            : buyerEmailInput;
-
-          const amountPaid = captureObj ? ('$' + parseFloat(captureObj.amount.value).toFixed(2)) : ('$' + (getSubtotal() * 1.08).toFixed(2));
-
-          const shippingStr = `${addressInput}, ${cityInput}, ${zipInput}, US`;
-
-          showSuccess({
-            orderId: orderId,
-            txnId: txnId,
-            payerId: payerId,
-            buyerName: buyerName,
-            buyerEmail: buyerEmail,
-            amountPaid: amountPaid,
-            shippingAddress: shippingStr
-          });
-
-        } catch (err) {
-          console.error('PayPal Order Capture Error:', err);
-          showToast('Payment capture failed. Please contact support if charged.');
-        } finally {
-          isCapturing = false;
+          },
+          items: cart.map(item => ({
+            name: item.name,
+            unit_amount: { currency_code: 'USD', value: item.price.toFixed(2) },
+            quantity: item.qty.toString(),
+            category: 'PHYSICAL_GOODS'
+          }))
+        }],
+        application_context: {
+          shipping_preference: 'NO_SHIPPING'
         }
-      },
-
-      onError: function(err) {
-        console.error('PayPal Integration Error:', err);
-        showToast('PayPal payment error occurred. Please try again.');
-      },
-
-      onCancel: function(data) {
-        console.log('PayPal Payment Cancelled:', data);
-        showToast('Payment was cancelled.');
-      }
-    });
-
-    paypalButtonInstance.render('#paypal-button-container');
-    paypalRendered = true;
-  } catch (err) {
-    console.error('Failed to render PayPal buttons:', err);
-    showToast('Could not initialize PayPal button. Please refresh the page.');
-  }
+      });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        const orderId = details.id || ('VELORA-' + Math.random().toString(36).substr(2,8).toUpperCase());
+        showSuccess(orderId);
+      });
+    },
+    onError: function(err) {
+      showToast('Payment failed. Please try again.');
+      console.error('PayPal error:', err);
+    },
+    onCancel: function() {
+      showToast('Payment cancelled.');
+    }
+  }).render('#paypal-button-container');
 }
 
-function showSuccess(orderInfo) {
+function showSuccess(orderId) {
   document.getElementById('checkoutContent').style.display = 'none';
   const s = document.getElementById('successScreen');
   s.classList.add('show');
-
-  const now = new Date();
-  const orderDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-  const estDeliveryDate = new Date(now);
-  estDeliveryDate.setDate(now.getDate() + 5);
-  const deliveryStr = estDeliveryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  document.getElementById('successOrderId').textContent = orderInfo.orderId;
-  document.getElementById('successTxnId').textContent = orderInfo.txnId || 'N/A';
-  document.getElementById('successPayerId').textContent = orderInfo.payerId || 'N/A';
-  document.getElementById('successCustomerName').textContent = orderInfo.buyerName;
-  document.getElementById('successCustomerEmail').textContent = orderInfo.buyerEmail;
-  document.getElementById('successTotalPaid').textContent = orderInfo.amountPaid;
-  document.getElementById('successOrderDate').textContent = orderDate;
-  document.getElementById('successEstDelivery').textContent = deliveryStr + ' (3-5 Business Days)';
-  document.getElementById('successShippingAddress').textContent = orderInfo.shippingAddress;
+  document.getElementById('successOrderId').textContent = 'Order ID: ' + orderId;
 }
 
 function finishOrder() {
   cart = [];
+  paypalRendered = false;
   updateCartBadge();
   renderCartItems();
-  resetShippingForm();
   closeCheckout();
   closeCart();
-  destroyPayPalButton();
-
-  showSection('shop');
+  document.getElementById('paypal-button-container').innerHTML = '';
   showToast('Thank you for your order!');
 }
 

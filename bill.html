@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout | LUXE</title>
+    <!-- PayPal Sandbox SDK Script (Replace 'sb' with your actual Sandbox Client ID from developer.paypal.com) -->
+    <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD&intent=capture"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --accent: #6366f1;
+            --bg: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            padding: 40px 20px;
+        }
+
+        .billing-card {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 28px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            padding: 40px;
+            flex: 1.2;
+        }
+
+        .summary-section {
+            background: #f8fafc;
+            padding: 40px;
+            flex: 1;
+            border-left: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .total-row {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 18px;
+            margin-top: 15px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #paypal-button-container {
+            margin-top: 20px;
+        }
+
+        .logout-checkout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-logout-sm {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        @media (max-width:768px) {
+            .billing-card {
+                flex-direction: column;
+            }
+        }
+
+        .warning-banner {
+            background: #ffedd5;
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="billing-card">
+        <div class="form-section">
+            <div class="logout-checkout-header">
+                <h2>✧ Secure Checkout</h2>
+                <button id="logoutFromBillBtn" class="btn-logout-sm">← Logout & Back</button>
+            </div>
+            <form id="shippingForm">
+                <div class="input-group"><label>Full Name</label><input type="text" id="fullName"
+                        placeholder="John Carter" required></div>
+                <div class="input-group"><label>Email Address</label><input type="email" id="email"
+                        placeholder="luxe@collector.com" required></div>
+                <div class="input-group"><label>Delivery Address</label><input type="text" id="address"
+                        placeholder="5th Avenue, NYC" required></div>
+            </form>
+        </div>
+        <div class="summary-section">
+            <h2>Order Summary</h2>
+            <div id="itemList"></div>
+            <div class="total-row"><span>Total</span><span id="displayTotal">$0.00</span></div>
+            <div id="paypal-button-container">
+                <div style="text-align:center; padding:15px; font-size:12px; color:#64748b;">Loading PayPal Payment System...</div>
+            </div>
+            <p style="text-align:center; margin-top:20px;"><a href="index.html"
+                    style="color:#64748b; text-decoration:none;">← Back to Shop</a></p>
+        </div>
+    </div>
+    <script>
+        // Helper: get current logged user
+        let currentUser = localStorage.getItem('luxe_user');
+        function redirectIfNotLogged() {
+            if (!currentUser) {
+                alert("You need to login first. Redirecting to shop.");
+                window.location.href = "index.html";
+                return false;
+            }
+            return true;
+        }
+        if (!redirectIfNotLogged()) throw new Error("no user");
+
+        // load cart specific to this user
+        const cartKey = `luxe_cart_${currentUser}`;
+        const cart = JSON.parse(localStorage.getItem(cartKey)) || {};
+        const totalAmountRaw = Object.values(cart).reduce((sum, item) => sum + (item.qty * item.price), 0);
+        const totalAmount = totalAmountRaw.toFixed(2);
+
+        const listDiv = document.getElementById('itemList');
+        if (Object.keys(cart).length === 0) {
+            listDiv.innerHTML = '<div class="warning-banner"> Your cart is empty. Please add items from the shop.</div>';
+            document.getElementById('paypal-button-container').style.display = 'none';
+        } else {
+            Object.values(cart).forEach(item => {
+                listDiv.innerHTML += `<div class="item-row"><span>${item.name} (x${item.qty})</span><span>$${(item.price * item.qty).toLocaleString()}</span></div>`;
+            });
+        }
+        document.getElementById('displayTotal').innerText = `$${Number(totalAmount).toLocaleString()}`;
+        localStorage.setItem('finalTotal', totalAmount);
+
+        // Validate shipping form before PayPal opens
+        function validateShippingForm() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = document.getElementById('address').value.trim();
+
+            if (!fullName || !email || !address) {
+                alert("Please fill in all shipping details before proceeding with payment.");
+                return false;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                return false;
+            }
+
+            return true;
+        }
+
+        // Paypal integration only if cart not empty
+        if (Object.keys(cart).length > 0 && typeof paypal !== 'undefined' && paypal.Buttons) {
+            paypal.Buttons({
+                style: {
+                    layout: 'vertical',
+                    color: 'black',
+                    shape: 'rect',
+                    label: 'pay',
+                    height: 48
+                },
+                onClick: function(data, actions) {
+                    if (!validateShippingForm()) {
+                        return actions.reject();
+                    }
+                    return actions.resolve();
+                },
+                createOrder: function (data, actions) {
+                    /*
+                     * PRODUCTION SECURITY NOTE:
+                     * In a production environment, order creation MUST be handled on a secure backend server.
+                     * Front-end JS code is executed in user browsers and subject to tampering.
+                     * Server endpoint calls PayPal REST API /v2/checkout/orders using Secret Key.
+                     */
+                    const fullName = document.getElementById('fullName').value.trim();
+                    const address = document.getElementById('address').value.trim();
+
+                    return actions.order.create({
+                        intent: 'CAPTURE',
+                        purchase_units: [{
+                            description: 'LUXE TIMEPIECES Order',
+                            amount: {
+                                currency_code: 'USD',
+                                value: totalAmount,
+                                breakdown: {
+                                    item_total: { currency_code: 'USD', value: totalAmount }
+                                }
+                            },
+                            items: Object.values(cart).map(item => ({
+                                name: item.name,
+                                unit_amount: { currency_code: 'USD', value: Number(item.price).toFixed(2) },
+                                quantity: item.qty.toString(),
+                                category: 'PHYSICAL_GOODS'
+                            })),
+                            shipping: {
+                                name: { full_name: fullName },
+                                address: {
+                                    address_line_1: address,
+                                    admin_area_2: 'New York',
+                                    postal_code: '10001',
+                                    country_code: 'US'
+                                }
+                            }
+                        }],
+                        application_context: {
+                            brand_name: 'LUXE TIMEPIECES',
+                            locale: 'en-US',
+                            user_action: 'PAY_NOW',
+                            shipping_preference: 'SET_PROVIDED_ADDRESS'
+                        }
+                    });
+                },
+                onApprove: async function (data, actions) {
+                    try {
+                        /*
+                         * PRODUCTION SECURITY NOTE:
+                         * Server-side capture prevents order fraud and client-side response manipulation.
+                         */
+                        const details = await actions.order.capture();
+                        const orderId = details.id || 'LUXE-SUCCESS';
+                        const payerName = (details.payer && details.payer.name && details.payer.name.given_name) ? details.payer.name.given_name : 'Customer';
+
+                        alert(`✓ Payment Successful!\n\nThank you ${payerName}.\nOrder ID: ${orderId}\nTotal Paid: $${totalAmount}`);
+                        
+                        // after successful payment, clear user's cart
+                        localStorage.removeItem(cartKey);
+                        localStorage.removeItem('finalTotal');
+                        window.location.href = 'index.html';
+                    } catch (err) {
+                        console.error('PayPal Order Capture Error:', err);
+                        alert('Payment capture failed. Please try again.');
+                    }
+                },
+                onCancel: function () {
+                    alert('Payment cancelled.');
+                },
+                onError: function (err) {
+                    console.error('PayPal Error:', err);
+                    alert('Payment error, please try again.');
+                }
+            }).render('#paypal-button-container');
+        }
+
+        // logout from bill: clear session and go to index
+        document.getElementById('logoutFromBillBtn').addEventListener('click', () => {
+            localStorage.removeItem('luxe_user');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+
+</html>
